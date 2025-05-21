@@ -1,0 +1,28 @@
+name: lab-solo-firewalls
+
+mgmt:
+  network: custom_mgmt
+  ipv4-subnet: 172.100.100.0/24
+
+topology:
+  nodes:
+    fw1:
+      kind: fortinet_fortigate
+      image: vrnetlab/vr-fortios:fortios
+      mgmt-ipv4: 172.100.100.14
+      startup-config: cfg/fw1.partial.cfg
+      ports:
+        - 8080:80
+        - 8443:443
+
+    fw2:
+      kind: paloalto_panos
+      image: vrnetlab/paloalto_pa-vm:10.0.11
+      mgmt-ipv4: 172.100.100.15
+      startup-config: cfg/fw2.partial.cfg
+      ports:
+        - 9443:443
+      
+
+  links:
+    - endpoints: ["fw1:eth2", "fw2:eth1"]
