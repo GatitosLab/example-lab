@@ -1,0 +1,58 @@
+name: lab-dmz-interna
+
+mgmt:
+  network: custom_mgmt
+  ipv4-subnet: 172.100.100.0/24
+
+topology:
+  nodes:
+    fw1:
+      kind: fortinet_fortigate
+      image: vrnetlab/vr-fortios:fortios
+      mgmt-ipv4: 172.100.100.14
+      ports:
+        - 8080:80
+        - 8443:443
+
+    fw2:
+      kind: paloalto_panos
+      image: vrnetlab/paloalto_pa-vm:10.0.11
+      mgmt-ipv4: 172.100.100.15
+      ports:
+        - 8090:80
+        - 9443:443
+
+    webserver:
+      kind: linux
+      image: nginx:alpine
+      exec:
+        - ip addr add 192.168.30.10/24 dev eth1
+        - ip route add default via 192.168.30.1
+
+    ldap:
+      kind: linux
+      image: osixia/openldap:1.5.0
+      exec:
+        - ip addr add 192.168.40.10/24 dev eth1
+        - ip route add default via 192.168.40.1
+
+    fileserver:
+      kind: linux
+      image: dperson/samba
+      exec:
+        - ip addr add 192.168.50.20/24 dev eth1
+        - ip route add default via 192.168.50.1
+
+    client:
+      kind: linux
+      image: alpine:latest
+      exec:
+        - ip addr add 192.168.50.100/24 dev eth1
+        - ip route add default via 192.168.50.1
+
+  links:
+    - endpoints: ["fw1:eth2", "fw2:eth1"]            # Entre firewalls
+    - endpoints: ["fw1:eth3", "webserver:eth1"]      # DMZ - 192.168.30.0/24
+    - endpoints: ["fw1:eth4", "ldap:eth1"]           # Red Interna LDAP - 192.168.40.0/24
+    - endpoints: ["fw1:eth5", "fileserver:eth1"]     # Red Interna Samba - 192.168.50.0/24
+    - endpoints: ["fw1:eth6", "client:eth1"]         # Red Interna Clientes - 192.168.50.0/24
